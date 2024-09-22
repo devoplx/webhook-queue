@@ -1,11 +1,11 @@
 import express, { Express, Request, Response } from "express";
-import agenda from "./queue";
+import agenda, { stats } from "./queue";
 import logger from './logger';
 
 import dotenv from 'dotenv'
 dotenv.config();
 const app: Express = express();
-const port = 4011
+const port = process.env.PORT
 const licenseKey = process.env.LOGGER_SECRET
 
 app.use(express.json());
@@ -39,9 +39,18 @@ app.post('/webhook/addqueue/:license/:id/:token', (req: Request, res: Response) 
 	}
 });
 
-
-// sigma sigma on the wall whos the skibidiest of them all
-// if you are skibidiest of them all then you are the sigma
+app.get('/queue/stats/:license)', (req: Request, res: Response) => {
+	const { license } = req.params;
+	if (license === licenseKey) {
+			res.status(200).json({
+					stats
+			});
+	} else {
+			res.status(401).json({
+					error: 'Invalid license key'
+			});
+	}
+})
 
 
 
@@ -52,6 +61,7 @@ const init = async () => {
 	if (!process.env.LOGGER_URL) missingEnv.push('LOGGER_URL');
 	if (!process.env.MONGODB_URL) missingEnv.push('MONGODB_URL');
 	if (!process.env.LOGGER_SECRET) missingEnv.push('LOGGER_SECRET');
+	if (!process.env.PORT) missingEnv.push('PORT');
 
 	if (missingEnv.length > 0) {
 		await logger.error(`[ENV] Missing environment variables: ${missingEnv.join(', ')}`);
@@ -61,10 +71,11 @@ const init = async () => {
 	app.listen(port, async  () => {
 		await logger.success(`[SERVER] Server is running at http://localhost:${port}`);
 	
-		await agenda.start();
-		agenda.every('1 minute', 'log-queue-status');
-		await logger.info('[AGENDA] Agenda started');
+	
 	});
+	await agenda.start();
+	await agenda.every('1 minute', 'log-queue-status');
+	await logger.info('[AGENDA] Agenda started');
 }
 
 init()

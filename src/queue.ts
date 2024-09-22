@@ -3,11 +3,16 @@ import {
 } from "@hokify/agenda";
 import axios from "axios";
 import logger from './logger';
-
+import dotenv from 'dotenv'
+dotenv.config();
 const mongoConnectionString = process.env.MONGODB_URL;
 //@ts-ignore
 const agenda = new Agenda({ db: { address: mongoConnectionString }, processEvery: "3 seconds", maxConcurrency: 1, lockLimit: 1},);
-
+let stats = {
+		webhookQueue: 0,
+		doneInTheLastMin: 0,
+		estTimeUntillCompleted: 'done'
+}
 agenda.define('webhook', async job => {
     const {
         url,
@@ -23,6 +28,7 @@ agenda.define('webhook', async job => {
         }
     });
     const json = res.data
+		stats.doneInTheLastMin = stats.doneInTheLastMin + 1;
 		
     await job.remove();
 
@@ -33,11 +39,22 @@ agenda.define('log-queue-status', async (job: any) => {
 	try {
 			// Get the number of jobs in the queue
 			const webhookCount = (await agenda.jobs({ name: 'webhook' }));
+
 			let count = 0;
 			for (const webhook of webhookCount) {
 				if (webhook.attrs.failReason == undefined || null){
 					count++
 				}
+			}
+			const timeMs = count * 3000;
+			let time2Done = 'N/A'
+			if (timeMs !== 0){
+				time2Done = new Date(Date.now() + timeMs).toISOString()
+			}
+			stats = {
+					webhookQueue: count,
+					doneInTheLastMin: stats.doneInTheLastMin,
+					estTimeUntillCompleted: time2Done
 			}
 			// Webhook URL (replace this with the actual webhook URL where you want to send the log)
 			const webhookURL = process.env.LOGGER_URL;
@@ -46,7 +63,7 @@ agenda.define('log-queue-status', async (job: any) => {
 			const embedMessage = {
 					embeds: [{
 							title: "Webhook Queue Status",
-							description: `Current number of webhooks in the queue: **${count}**`,
+							description: `Current webhook queue status: ${count}\n\nWebhooks done in the last minute: ${stats.doneInTheLastMin}\n\nEstimated time until completed: ${stats.estTimeUntillCompleted}`,
 							color: 3447003,  // Blue color
 							timestamp: new Date().toISOString(),
 							footer: {
@@ -59,10 +76,12 @@ agenda.define('log-queue-status', async (job: any) => {
 			//@ts-ignore
 			await axios.post(webhookURL, embedMessage);
 
-			await logger.notice(`[LOG] Sent webhook queue status: ${count}`);
+			await logger.notice(`[QUEUE] Webhook queue status: ${count} webhooks in queue, ${stats.doneInTheLastMin} done in the last minute, estimated time until completed: ${stats.estTimeUntillCompleted}`);
+			stats.doneInTheLastMin = 0;
 	} catch (error) {
 		//@ts-ignore
 			await logger.error(`[ERROR] Failed to send webhook queue status: ${error.message}`);
 	}
 });
 export default agenda
+export {stats}
