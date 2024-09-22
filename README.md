@@ -47,6 +47,17 @@ BODY:
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `discord webhook schema` | `string` | **Required**. [Discord docs](https://discord.com/developers/docs/resources/webhook#execute-webhook-jsonform-params) |
+
+#
+```http
+  POST /queue/stats/:license
+```
+URL PARAMS:
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `license` | `string` | **Required**. The license Key |
+
+
 ## Authors
 
 - [@RjManhas](https://github.com/RjManhas)
@@ -92,7 +103,9 @@ We understand, discord rate limit per channel is 30Msg/60 which would only requi
 To run this project, you will need to add the following environment variables to your .env file
 
 `LICENSE`
-
+`LOGGER_SECRET`
+`LOGGER_URL`
+`PORT`
 `MOGNODB_URL`
 
 
