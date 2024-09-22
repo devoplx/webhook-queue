@@ -39,7 +39,7 @@ app.post('/webhook/addqueue/:license/:id/:token', (req: Request, res: Response) 
 	}
 });
 
-app.get('/queue/stats/:license)', (req: Request, res: Response) => {
+app.get('/queue/stats/:license', (req: Request, res: Response) => {
 	const { license } = req.params;
 	if (license === licenseKey) {
 			res.status(200).json({
