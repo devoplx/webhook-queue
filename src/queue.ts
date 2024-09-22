@@ -35,6 +35,13 @@ agenda.define('webhook', async job => {
 }, {
 
 });
+
+
+function dateToUnix(date: Date) {
+	return `<t:${Math.floor(date.getTime() / 1000)}>`;
+}
+
+
 agenda.define('log-queue-status', async (job: any) => {
 	try {
 			// Get the number of jobs in the queue
@@ -48,8 +55,10 @@ agenda.define('log-queue-status', async (job: any) => {
 			}
 			const timeMs = count * 3000;
 			let time2Done = 'N/A'
+			let discordDate = 'N/A'
 			if (timeMs !== 0){
 				time2Done = new Date(Date.now() + timeMs).toISOString()
+				discordDate = dateToUnix(new Date(Date.now() + timeMs))
 			}
 			stats = {
 					webhookQueue: count,
@@ -63,7 +72,7 @@ agenda.define('log-queue-status', async (job: any) => {
 			const embedMessage = {
 					embeds: [{
 							title: "Webhook Queue Status",
-							description: `Current webhook queue status: ${count}\n\nWebhooks done in the last minute: ${stats.doneInTheLastMin}\n\nEstimated time until completed: ${stats.estTimeUntillCompleted}`,
+							description: `Current webhook queue status: ${count}\n\nWebhooks done in the last minute: ${stats.doneInTheLastMin}\n\nEstimated time until completed: ${discordDate}`,
 							color: 3447003,  // Blue color
 							timestamp: new Date().toISOString(),
 							footer: {
