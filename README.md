@@ -50,7 +50,7 @@ BODY:
 ## Authors
 
 - [@RjManhas](https://github.com/RjManhas)
-- [@joe](https://github.com/Joe-Development)
+- [@JoeV2](https://github.com/Joe-Development)
 
 Backed By [@Devoplx](https://github.com/devoplx) Company
 
